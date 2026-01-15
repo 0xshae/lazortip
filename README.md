@@ -12,6 +12,7 @@
 - **⚡ Gasless Transactions** — Tips are sent without users paying any gas fees
 - **🎨 Beautiful UI** — Coffee-themed design with smooth animations
 - **📦 Production Ready** — Built with Next.js 14 and TypeScript
+- **📱 Mobile Friendly** — Works great on all devices
 
 ## 🎬 Demo Flow
 
@@ -23,7 +24,7 @@ FaceID/TouchID prompt appears
 ✅ Transaction sent (gasless!)
 ```
 
-No wallet extensions. No popups. No seed phrases. Just tap and tip.
+**No wallet extensions. No popups. No seed phrases. Just tap and tip.**
 
 ---
 
@@ -32,7 +33,8 @@ No wallet extensions. No popups. No seed phrases. Just tap and tip.
 ### Prerequisites
 
 - Node.js 18+
-- npm
+- npm or yarn
+- A device with biometric support (for testing passkeys)
 
 ### Installation
 
@@ -61,33 +63,84 @@ const TIP_RECIPIENT = 'YOUR_WALLET_ADDRESS_HERE';
 
 ---
 
-## 📖 How It Works
+## 🎯 Live Demo
 
-### Lazorkit SDK Integration
+**[🔗 View Live Demo](https://YOUR_VERCEL_URL.vercel.app)**
 
-The app uses `@lazorkit/wallet` to provide:
+*Running on Solana Devnet*
 
-1. **Passkey Authentication** — Users create/access wallets with biometrics
-2. **Smart Wallets** — Each user gets a programmable Solana account (PDA)
-3. **Gasless Transactions** — Paymaster sponsors transaction fees
+### Testing the Demo
 
-### Key Components
-
-```
-src/
-├── app/
-│   ├── layout.tsx      # Root layout with fonts
-│   ├── page.tsx        # Main page with LazorkitProvider
-│   └── globals.css     # Global styles
-├── components/
-│   └── TipJar.tsx      # Main tip jar widget
-```
+1. Visit the demo URL
+2. Click "☕ Buy me a Coffee"
+3. Create a passkey (first time) or authenticate
+4. Select a tip amount and confirm with biometrics
+5. View your transaction on Solana Explorer!
 
 ---
 
-## 🔧 SDK Usage
+## 📖 How It Works
 
-### 1. Wrap with Provider
+### The Lazorkit Advantage
+
+Traditional crypto donations require users to:
+1. Install a wallet extension (Phantom, Solflare, etc.)
+2. Create an account and backup seed phrase
+3. Fund with SOL for gas fees
+4. Approve transactions in popups
+
+**With Lazorkit:**
+1. Tap a button
+2. Use FaceID/TouchID
+3. Done! ✅
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      Your App (Next.js)                     │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   ┌─────────────┐    ┌──────────────┐    ┌─────────────┐   │
+│   │   TipJar    │───▶│  Lazorkit    │───▶│  Paymaster  │   │
+│   │  Component  │    │   Portal     │    │  (Gasless)  │   │
+│   └─────────────┘    └──────────────┘    └─────────────┘   │
+│         │                   │                   │           │
+│         ▼                   ▼                   ▼           │
+│   ┌─────────────────────────────────────────────────────┐  │
+│   │               Solana Blockchain (Devnet)            │  │
+│   │                                                     │  │
+│   │   User's Smart Wallet (PDA) ──▶ Your Wallet        │  │
+│   └─────────────────────────────────────────────────────┘  │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Key Concepts
+
+| Concept | Description |
+|---------|-------------|
+| **Passkey** | Cryptographic credential stored on device, accessed via biometrics |
+| **Smart Wallet (PDA)** | Program-derived address controlled by the user's passkey |
+| **Paymaster** | Service that pays transaction fees on behalf of users |
+| **Gasless** | Transactions where users don't pay any network fees |
+
+---
+
+## 🔧 SDK Integration
+
+### 1. Install Dependencies
+
+```bash
+npm install @lazorkit/wallet @solana/web3.js zustand framer-motion
+npm install buffer crypto-browserify stream-browserify process globalthis
+```
+
+### 2. Configure Next.js
+
+See `next.config.js` for required webpack configuration to handle Solana's Node.js dependencies in the browser.
+
+### 3. Wrap with Provider
 
 ```tsx
 import { LazorkitProvider } from '@lazorkit/wallet';
@@ -103,23 +156,23 @@ import { LazorkitProvider } from '@lazorkit/wallet';
 </LazorkitProvider>
 ```
 
-### 2. Use the Wallet Hook
+### 4. Use the Wallet Hook
 
 ```tsx
 import { useWallet } from '@lazorkit/wallet';
 
 function Component() {
   const { 
-    connect,              // Connect with passkey
-    disconnect,           // Disconnect wallet
-    signAndSendTransaction, // Send gasless tx
-    isConnected,          // Connection status
-    smartWalletPubkey,    // Wallet public key
+    connect,                  // Connect with passkey
+    disconnect,               // Disconnect wallet
+    signAndSendTransaction,   // Send gasless transaction
+    isConnected,              // Connection status
+    smartWalletPubkey,        // Wallet public key
   } = useWallet();
 }
 ```
 
-### 3. Send Gasless Transactions
+### 5. Send Gasless Transactions
 
 ```tsx
 import { SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
@@ -142,28 +195,25 @@ const sendTip = async () => {
 
 ---
 
-## 📚 Tutorials
+## 📚 Step-by-Step Tutorials
 
 ### Tutorial 1: Create a Passkey-Based Wallet
-📄 [Read Tutorial →](./docs/TUTORIAL_PASSKEY_WALLET.md)
+📄 [Read Full Tutorial →](./docs/TUTORIAL_PASSKEY_WALLET.md)
+
+Learn how to:
+- Set up Lazorkit SDK in Next.js
+- Configure webpack for Solana
+- Implement passkey authentication
+- Handle wallet states
 
 ### Tutorial 2: Send a Gasless Transaction  
-📄 [Read Tutorial →](./docs/TUTORIAL_GASLESS_TRANSACTION.md)
+📄 [Read Full Tutorial →](./docs/TUTORIAL_GASLESS_TRANSACTION.md)
 
----
-
-## 🚢 Deployment
-
-### Deploy to Vercel
-
-```bash
-npm i -g vercel
-vercel
-```
-
-### Environment Variables
-
-No environment variables required for devnet.
+Learn how to:
+- Build Solana transfer instructions
+- Send transactions without gas fees
+- Handle transaction states
+- Verify on Solana Explorer
 
 ---
 
@@ -173,19 +223,134 @@ No environment variables required for devnet.
 lazorkit-tip-jar/
 ├── src/
 │   ├── app/
-│   │   ├── layout.tsx
-│   │   ├── page.tsx
-│   │   └── globals.css
+│   │   ├── layout.tsx       # Root layout with fonts & polyfills
+│   │   ├── page.tsx         # Main page with LazorkitProvider
+│   │   └── globals.css      # Custom CSS & animations
 │   └── components/
-│       └── TipJar.tsx
+│       └── TipJar.tsx       # Main tip jar widget (fully commented!)
 ├── docs/
 │   ├── TUTORIAL_PASSKEY_WALLET.md
 │   └── TUTORIAL_GASLESS_TRANSACTION.md
-├── next.config.js
-├── tailwind.config.ts
+├── next.config.js           # Webpack config for Solana polyfills
+├── tailwind.config.ts       # Custom coffee-themed colors
 ├── package.json
 └── README.md
 ```
+
+### Key Files Explained
+
+| File | Purpose |
+|------|---------|
+| `TipJar.tsx` | The main widget component with full SDK integration |
+| `page.tsx` | Sets up `LazorkitProvider` with configuration |
+| `next.config.js` | Critical webpack settings for Solana in browser |
+| `globals.css` | Custom animations and coffee color palette |
+
+---
+
+## 🚢 Deployment
+
+### Deploy to Vercel
+
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy
+vercel
+```
+
+### Deploy to Netlify
+
+```bash
+npm run build
+# Upload .next folder to Netlify
+```
+
+### Environment Variables
+
+No environment variables required for devnet deployment.
+
+For mainnet, update the RPC URL and paymaster configuration in `page.tsx`:
+
+```tsx
+const LAZORKIT_CONFIG = {
+  rpcUrl: 'https://api.mainnet-beta.solana.com',
+  // ... rest of config
+};
+```
+
+---
+
+## 🎨 Customization
+
+### Change Tip Amounts
+
+Edit `src/components/TipJar.tsx`:
+
+```tsx
+const TIP_AMOUNTS = [
+  { value: 0.01, label: 'Coffee', emoji: '☕' },
+  { value: 0.05, label: 'Pizza', emoji: '🍕' },
+  { value: 0.1, label: 'Party', emoji: '🎉' },
+];
+```
+
+### Change Colors
+
+Edit `tailwind.config.ts`:
+
+```typescript
+colors: {
+  espresso: '#2C1810',   // Dark brown
+  mocha: '#4A2C2A',      // Medium brown
+  caramel: '#C17F59',    // Accent
+  cream: '#FFF8F0',      // Background
+  // ... add your own!
+}
+```
+
+### Change Recipient
+
+Edit `src/components/TipJar.tsx`:
+
+```tsx
+const TIP_RECIPIENT = 'YOUR_WALLET_ADDRESS_HERE';
+```
+
+---
+
+## 🔒 Security Considerations
+
+- **Passkeys** are stored securely on user devices, never on servers
+- **Smart wallets** are program-derived addresses (PDAs) that can only be controlled by the passkey
+- **Transactions** require biometric confirmation for every action
+- The **paymaster** only covers fees, never has access to user funds
+
+---
+
+## 🧪 Testing
+
+### Get Devnet SOL
+
+To test the tip jar, you'll need devnet SOL in your smart wallet:
+
+1. Connect with passkey (this creates your smart wallet)
+2. Copy your wallet address from the UI
+3. Get devnet SOL: [faucet.solana.com](https://faucet.solana.com)
+
+### Verify Transactions
+
+All transactions can be verified on [Solana Explorer](https://explorer.solana.com/?cluster=devnet).
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Feel free to:
+- Report bugs
+- Suggest features
+- Submit pull requests
 
 ---
 
@@ -197,13 +362,21 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## 🙏 Acknowledgments
 
-- [Lazorkit](https://lazorkit.com) — Passkey wallet SDK
-- [Solana](https://solana.com) — Blockchain infrastructure
+- [Lazorkit](https://lazorkit.com) — Passkey wallet SDK for Solana
+- [Solana](https://solana.com) — High-performance blockchain
 - [Next.js](https://nextjs.org) — React framework
+- [Framer Motion](https://www.framer.com/motion/) — Animation library
+
+---
+
+## 📞 Support
+
+- **Lazorkit Telegram**: [t.me/lazorkit](https://t.me/lazorkit)
+- **Lazorkit Docs**: [docs.lazorkit.com](https://docs.lazorkit.com)
+- **Lazorkit GitHub**: [github.com/lazor-kit/lazor-kit](https://github.com/lazor-kit/lazor-kit)
 
 ---
 
 <p align="center">
   Made with ☕ and <a href="https://lazorkit.com">Lazorkit</a>
 </p>
-
