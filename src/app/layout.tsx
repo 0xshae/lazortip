@@ -21,14 +21,20 @@ export default function RootLayout({
       <head>
         <Script id="polyfills" strategy="beforeInteractive">
           {`
-            if (typeof globalThis !== 'undefined') {
-              globalThis.global = globalThis;
-            } else if (typeof window !== 'undefined') {
-              window.global = window;
-            }
-            if (typeof window !== 'undefined' && typeof window.Buffer === 'undefined') {
-              window.Buffer = window.Buffer || { isBuffer: () => false };
-            }
+            // Setup global for Node.js compatibility
+            (function() {
+              if (typeof globalThis !== 'undefined') {
+                globalThis.global = globalThis;
+              }
+              if (typeof window !== 'undefined') {
+                window.global = window;
+                
+                // Ensure crypto is available on global
+                if (typeof window.crypto !== 'undefined') {
+                  window.global.crypto = window.crypto;
+                }
+              }
+            })();
           `}
         </Script>
       </head>
@@ -38,4 +44,3 @@ export default function RootLayout({
     </html>
   )
 }
-

@@ -1,5 +1,21 @@
 'use client';
 
+/**
+ * TipJar Component
+ * 
+ * A gasless tip jar widget that demonstrates Lazorkit SDK integration.
+ * Users can send SOL tips without paying gas fees, using passkey authentication
+ * (FaceID, TouchID, or Windows Hello) instead of traditional wallet extensions.
+ * 
+ * Key Features:
+ * - Passkey-based wallet creation and authentication
+ * - Gasless transactions via Lazorkit paymaster
+ * - Real-time balance updates
+ * - Smooth animations with Framer Motion
+ * 
+ * @see https://docs.lazorkit.com for SDK documentation
+ */
+
 import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWallet } from '@lazorkit/wallet';
@@ -10,20 +26,65 @@ import {
   Connection
 } from '@solana/web3.js';
 
+// ============================================================================
 // Configuration
+// ============================================================================
+
+/**
+ * Predefined tip amounts with friendly labels.
+ * Customize these values for your use case.
+ */
 const TIP_AMOUNTS = [
   { value: 0.01, label: 'Coffee', emoji: '☕' },
   { value: 0.05, label: 'Pizza', emoji: '🍕' },
   { value: 0.1, label: 'Party', emoji: '🎉' },
 ];
 
-// Replace with your wallet address to receive tips
+/**
+ * IMPORTANT: Replace this with your own Solana wallet address!
+ * This is the wallet that will receive the tips.
+ */
 const TIP_RECIPIENT = 'hij78MKbJSSs15qvkHWTDCtnmba2c1W4r1V22g5sD8w';
+
+/**
+ * Solana RPC endpoint for balance queries.
+ * Using devnet for development; switch to mainnet-beta for production.
+ */
 const RPC_ENDPOINT = 'https://api.devnet.solana.com';
 
+// ============================================================================
+// Types
+// ============================================================================
+
+/**
+ * Transaction status states for UI feedback.
+ * - idle: Ready for user action
+ * - connecting: Creating/accessing passkey wallet
+ * - confirming: Waiting for biometric confirmation
+ * - sending: Transaction in progress
+ * - success: Transaction completed successfully
+ * - error: Something went wrong
+ */
 type Status = 'idle' | 'connecting' | 'confirming' | 'sending' | 'success' | 'error';
 
+// ============================================================================
+// Component
+// ============================================================================
+
 export function TipJar() {
+  // ---------------------------------------------------------------------------
+  // Lazorkit Wallet Hook
+  // ---------------------------------------------------------------------------
+  
+  /**
+   * The useWallet hook provides all wallet functionality:
+   * - connect: Opens passkey authentication portal
+   * - disconnect: Clears wallet session
+   * - signAndSendTransaction: Signs and submits transactions (gasless!)
+   * - isConnected: Boolean indicating wallet connection status
+   * - isLoading: Boolean for loading states during async operations
+   * - smartWalletPubkey: The user's Solana wallet public key (PDA)
+   */
   const { 
     connect, 
     disconnect, 
@@ -33,16 +94,29 @@ export function TipJar() {
     smartWalletPubkey 
   } = useWallet();
 
+  // ---------------------------------------------------------------------------
+  // State Management
+  // ---------------------------------------------------------------------------
+
   const [selectedAmount, setSelectedAmount] = useState(TIP_AMOUNTS[0].value);
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState<string | null>(null);
   const [txSignature, setTxSignature] = useState<string | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
 
+  // Derive wallet address string for display
   const walletAddress = smartWalletPubkey?.toBase58();
 
-  // Fetch balance when connected
+  // ---------------------------------------------------------------------------
+  // Balance Fetching
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Fetch and update wallet balance when connected.
+   * Uses an interval to periodically refresh the balance.
+   */
   useEffect(() => {
+    // Clear balance when disconnected
     if (!smartWalletPubkey) {
       setBalance(null);
       return;
@@ -50,7 +124,10 @@ export function TipJar() {
 
     const fetchBalance = async () => {
       try {
+        // Create connection to Solana network
         const connection = new Connection(RPC_ENDPOINT, 'confirmed');
+        
+        // Query balance in lamports and convert to SOL
         const bal = await connection.getBalance(smartWalletPubkey);
         setBalance(bal / LAMPORTS_PER_SOL);
       } catch (err) {
@@ -58,47 +135,87 @@ export function TipJar() {
       }
     };
 
+    // Fetch immediately and then every 10 seconds
     fetchBalance();
     const interval = setInterval(fetchBalance, 10000);
+    
+    // Cleanup interval on unmount or wallet change
     return () => clearInterval(interval);
   }, [smartWalletPubkey]);
 
-  // Handle connect/tip
+  // ---------------------------------------------------------------------------
+  // Main Action Handler
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Handles the main button action:
+   * - If not connected: Initiates passkey wallet connection
+   * - If connected: Sends a gasless tip transaction
+   */
   const handleAction = useCallback(async () => {
+    // Reset any previous errors
     setError(null);
 
     try {
-      // If not connected, connect first
+      // ----- STEP 1: Connect if not already connected -----
       if (!isConnected) {
         setStatus('connecting');
+        
+        /**
+         * connect() opens the Lazorkit portal where users:
+         * 1. Create a new passkey (first time) or
+         * 2. Authenticate with existing passkey
+         * 
+         * The feeMode: 'paymaster' option enables gasless transactions.
+         * This means the Lazorkit paymaster will cover transaction fees.
+         */
         await connect({ feeMode: 'paymaster' });
+        
         setStatus('idle');
         return;
       }
 
-      // If connected, send tip
+      // ----- STEP 2: Build and send the tip transaction -----
       if (!smartWalletPubkey) return;
 
       setStatus('confirming');
 
+      // Parse recipient address
       const recipientPubkey = new PublicKey(TIP_RECIPIENT);
+      
+      // Convert SOL to lamports (1 SOL = 1 billion lamports)
       const lamports = Math.floor(selectedAmount * LAMPORTS_PER_SOL);
 
+      /**
+       * Create a native SOL transfer instruction.
+       * This is a standard Solana instruction - Lazorkit handles the
+       * signing and fee payment behind the scenes.
+       */
       const transferInstruction = SystemProgram.transfer({
-        fromPubkey: smartWalletPubkey,
-        toPubkey: recipientPubkey,
-        lamports,
+        fromPubkey: smartWalletPubkey,  // User's smart wallet (PDA)
+        toPubkey: recipientPubkey,       // Tip recipient
+        lamports,                         // Amount in lamports
       });
 
       setStatus('sending');
 
+      /**
+       * signAndSendTransaction() does the following:
+       * 1. Prompts user for biometric confirmation (FaceID/TouchID)
+       * 2. Signs the transaction with the user's passkey
+       * 3. Paymaster adds fee payment instruction
+       * 4. Submits transaction to Solana network
+       * 
+       * Returns the transaction signature on success.
+       */
       const signature = await signAndSendTransaction({
         instructions: [transferInstruction],
         transactionOptions: {
-          clusterSimulation: 'devnet',
+          clusterSimulation: 'devnet',  // Use devnet for testing
         },
       });
 
+      // Save signature for explorer link
       setTxSignature(signature);
       setStatus('success');
 
@@ -109,14 +226,26 @@ export function TipJar() {
     }
   }, [isConnected, connect, smartWalletPubkey, selectedAmount, signAndSendTransaction]);
 
-  // Reset to send another tip
+  // ---------------------------------------------------------------------------
+  // Reset Handler
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Reset state to allow sending another tip.
+   */
   const reset = () => {
     setStatus('idle');
     setError(null);
     setTxSignature(null);
   };
 
-  // Button text based on state
+  // ---------------------------------------------------------------------------
+  // Dynamic Button Text
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Returns appropriate button text based on current state.
+   */
   const getButtonText = () => {
     if (isLoading || status === 'connecting') return 'Connecting...';
     if (status === 'confirming') return 'Confirm with FaceID...';
@@ -125,7 +254,12 @@ export function TipJar() {
     return `☕ Send ${selectedAmount} SOL`;
   };
 
+  // Disable button during async operations
   const isButtonDisabled = isLoading || ['connecting', 'confirming', 'sending'].includes(status);
+
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
 
   return (
     <div className="w-full max-w-md">
@@ -135,11 +269,11 @@ export function TipJar() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        {/* Top accent bar */}
+        {/* Decorative top accent bar */}
         <div className="h-1 bg-gradient-to-r from-caramel via-gold to-copper" />
 
         <div className="p-6">
-          {/* Header */}
+          {/* Header Section */}
           <div className="text-center mb-6">
             <div className="text-5xl mb-3">☕</div>
             <h2 className="text-xl font-display font-semibold text-espresso">
@@ -152,7 +286,7 @@ export function TipJar() {
 
           <AnimatePresence mode="wait">
             {status === 'success' && txSignature ? (
-              /* Success State */
+              /* ============ Success State ============ */
               <motion.div
                 key="success"
                 className="text-center py-4"
@@ -163,6 +297,8 @@ export function TipJar() {
                 <div className="text-5xl mb-4">🎉</div>
                 <h3 className="text-lg font-semibold text-espresso mb-2">Thank you!</h3>
                 <p className="text-sm text-mocha/60 mb-4">Your tip was sent successfully</p>
+                
+                {/* Link to Solana Explorer to verify transaction */}
                 <a
                   href={`https://explorer.solana.com/tx/${txSignature}?cluster=devnet`}
                   target="_blank"
@@ -171,6 +307,7 @@ export function TipJar() {
                 >
                   View on Explorer →
                 </a>
+                
                 <button
                   onClick={reset}
                   className="px-4 py-2 bg-cream text-espresso rounded-lg border border-caramel/30 hover:bg-latte transition-colors"
@@ -179,14 +316,14 @@ export function TipJar() {
                 </button>
               </motion.div>
             ) : (
-              /* Form State */
+              /* ============ Form State ============ */
               <motion.div
                 key="form"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                {/* Amount Selection */}
+                {/* Tip Amount Selection Grid */}
                 <div className="grid grid-cols-3 gap-2 mb-4">
                   {TIP_AMOUNTS.map((amount) => (
                     <motion.button
@@ -209,7 +346,7 @@ export function TipJar() {
                   ))}
                 </div>
 
-                {/* Wallet Info */}
+                {/* Connected Wallet Info */}
                 {isConnected && walletAddress && (
                   <motion.div
                     className="bg-cream rounded-xl p-3 mb-4 flex items-center justify-between flex-wrap gap-2"
@@ -239,7 +376,7 @@ export function TipJar() {
                   </motion.div>
                 )}
 
-                {/* Error Message */}
+                {/* Error Message Display */}
                 {error && (
                   <motion.div
                     className="bg-red-50 text-red-600 rounded-lg p-3 mb-4 text-sm text-center"
@@ -266,7 +403,7 @@ export function TipJar() {
                   <span>{getButtonText()}</span>
                 </motion.button>
 
-                {/* Footer */}
+                {/* Footer with Branding */}
                 <div className="flex items-center justify-between mt-4 pt-4 border-t border-caramel/10">
                   <span className="text-xs text-mocha/50">
                     Powered by{' '}
@@ -286,4 +423,3 @@ export function TipJar() {
     </div>
   );
 }
-

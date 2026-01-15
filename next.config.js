@@ -1,29 +1,22 @@
 const webpack = require('webpack');
+const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   webpack: (config, { isServer }) => {
     if (!isServer) {
-      // Handle Node.js polyfills for Solana/Lazorkit
+      // Use NodePolyfillPlugin for comprehensive Node.js polyfills
+      config.plugins.push(new NodePolyfillPlugin({
+        excludeAliases: ['console'],
+      }));
+      
+      // Additional fallbacks
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
         net: false,
         tls: false,
-        crypto: require.resolve('crypto-browserify'),
-        stream: require.resolve('stream-browserify'),
-        buffer: require.resolve('buffer'),
-        process: require.resolve('process/browser'),
       };
-      
-      // Provide global polyfills
-      config.plugins.push(
-        new webpack.ProvidePlugin({
-          global: ['globalthis', 'globalThis'],
-          Buffer: ['buffer', 'Buffer'],
-          process: ['process', 'default'],
-        })
-      );
       
       // Define global for browser
       config.plugins.push(
@@ -38,4 +31,3 @@ const nextConfig = {
 };
 
 module.exports = nextConfig;
-
