@@ -2,9 +2,12 @@
 
 > A gasless tip jar widget powered by Lazorkit SDK — Accept SOL tips with passkey authentication, no wallet popups!
 
+[![Live Demo](https://img.shields.io/badge/🔗_Live_Demo-lazortip.vercel.app-blue?style=for-the-badge)](https://lazortip.vercel.app/)
+
 ![Solana Devnet](https://img.shields.io/badge/Solana-Devnet-blueviolet)
 ![Next.js](https://img.shields.io/badge/Next.js-14-black)
 ![Lazorkit](https://img.shields.io/badge/powered%20by-Lazorkit-orange)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)
 
 ## ✨ Features
 
@@ -32,9 +35,9 @@ FaceID/TouchID prompt appears
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20+ (recommended) or 18.17+
 - npm or yarn
-- A device with biometric support (for testing passkeys)
+- A device with biometric support (FaceID, TouchID, or Windows Hello)
 
 ### Installation
 
@@ -65,7 +68,7 @@ const TIP_RECIPIENT = 'YOUR_WALLET_ADDRESS_HERE';
 
 ## 🎯 Live Demo
 
-**[🔗 View Live Demo](https://YOUR_VERCEL_URL.vercel.app)**
+**[🔗 View Live Demo](https://lazortip.vercel.app/)**
 
 *Running on Solana Devnet*
 
@@ -149,7 +152,7 @@ import { LazorkitProvider } from '@lazorkit/wallet';
   rpcUrl="https://api.devnet.solana.com"
   portalUrl="https://portal.lazor.sh"
   paymasterConfig={{
-    paymasterUrl: "https://lazorkit-paymaster.onrender.com"
+    paymasterUrl: "https://kora.devnet.lazorkit.com"
   }}
 >
   <YourApp />
@@ -374,6 +377,32 @@ MIT License - see [LICENSE](LICENSE) for details.
 - **Lazorkit Telegram**: [t.me/lazorkit](https://t.me/lazorkit)
 - **Lazorkit Docs**: [docs.lazorkit.com](https://docs.lazorkit.com)
 - **Lazorkit GitHub**: [github.com/lazor-kit/lazor-kit](https://github.com/lazor-kit/lazor-kit)
+
+---
+
+## 🏆 Hackathon Submission
+
+This project was built for the **Lazorkit SDK Integration Bounty** (Dec 2024 - Jan 2025).
+
+### Deliverables Checklist
+
+| Requirement | Status |
+|-------------|--------|
+| ✅ Working Example Repo | Next.js 14 + TypeScript |
+| ✅ Clean folder structure | `src/app`, `src/components`, `docs/` |
+| ✅ Well-documented code | Extensive comments in all files |
+| ✅ Quick-Start Guide | This README |
+| ✅ Tutorial 1: Passkey Wallet | [docs/TUTORIAL_PASSKEY_WALLET.md](./docs/TUTORIAL_PASSKEY_WALLET.md) |
+| ✅ Tutorial 2: Gasless Transaction | [docs/TUTORIAL_GASLESS_TRANSACTION.md](./docs/TUTORIAL_GASLESS_TRANSACTION.md) |
+| ✅ Live Demo | [lazortip.vercel.app](https://lazortip.vercel.app/) |
+
+### What Makes This Example Useful
+
+- **Real-world use case**: Tip jar widget that anyone can embed
+- **Complete integration**: Shows passkey auth + gasless transactions
+- **Production-ready UI**: Beautiful coffee-themed design with animations
+- **Copy-paste code**: Fully commented, easy to understand and adapt
+- **Comprehensive tutorials**: Step-by-step guides for key features
 
 ---
 
