@@ -31,6 +31,15 @@ import {
 // ============================================================================
 
 /**
+ * Fee mode for transactions:
+ * - 'paymaster': Gasless transactions (paymaster pays fees) - RECOMMENDED
+ * - 'user': User pays their own transaction fees (requires SOL in wallet)
+ * 
+ * Using Kora paymaster for gasless transactions!
+ */
+const FEE_MODE: 'paymaster' | 'user' = 'paymaster';
+
+/**
  * Predefined tip amounts with friendly labels.
  * Customize these values for your use case.
  */
@@ -103,6 +112,7 @@ export function TipJar() {
   const [error, setError] = useState<string | null>(null);
   const [txSignature, setTxSignature] = useState<string | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
+  const [copied, setCopied] = useState(false);
 
   // Derive wallet address string for display
   const walletAddress = smartWalletPubkey?.toBase58();
@@ -166,10 +176,13 @@ export function TipJar() {
          * 1. Create a new passkey (first time) or
          * 2. Authenticate with existing passkey
          * 
-         * The feeMode: 'paymaster' option enables gasless transactions.
-         * This means the Lazorkit paymaster will cover transaction fees.
+         * The feeMode option controls who pays transaction fees:
+         * - 'paymaster': Gasless (paymaster service pays fees)
+         * - 'user': User pays fees (requires SOL in wallet)
          */
-        await connect({ feeMode: 'paymaster' });
+        console.log('Connecting with feeMode:', FEE_MODE);
+        await connect({ feeMode: FEE_MODE });
+        console.log('Connection successful!');
         
         setStatus('idle');
         return;
@@ -208,12 +221,29 @@ export function TipJar() {
        * 
        * Returns the transaction signature on success.
        */
-      const signature = await signAndSendTransaction({
-        instructions: [transferInstruction],
-        transactionOptions: {
-          clusterSimulation: 'devnet',  // Use devnet for testing
-        },
+      console.log('Starting signAndSendTransaction...');
+      console.log('Transfer details:', {
+        from: smartWalletPubkey.toBase58(),
+        to: recipientPubkey.toBase58(),
+        lamports,
+        solAmount: selectedAmount
       });
+      
+      let signature: string;
+      try {
+        signature = await signAndSendTransaction({
+          instructions: [transferInstruction],
+          transactionOptions: {
+            clusterSimulation: 'devnet',  // Use devnet for testing
+          },
+        });
+        console.log('Transaction successful! Signature:', signature);
+      } catch (signError) {
+        console.error('SignAndSendTransaction error details:', signError);
+        console.error('Error type:', signError?.constructor?.name);
+        console.error('Error stack:', signError instanceof Error ? signError.stack : 'N/A');
+        throw signError;
+      }
 
       // Save signature for explorer link
       setTxSignature(signature);
@@ -221,7 +251,10 @@ export function TipJar() {
 
     } catch (err) {
       console.error('Action failed:', err);
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      // Show more detailed error for debugging
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      console.error('Full error:', errorMessage);
+      setError(errorMessage || 'Something went wrong. Check browser console for details.');
       setStatus('error');
     }
   }, [isConnected, connect, smartWalletPubkey, selectedAmount, signAndSendTransaction]);
@@ -280,8 +313,16 @@ export function TipJar() {
               Buy me a Coffee
             </h2>
             <p className="text-sm text-mocha/60 mt-1">
-              Support my work with a gasless tip ✨
+              Support my work with a tip ✨
             </p>
+          </div>
+
+          {/* Debug Info - Remove in production */}
+          <div className="bg-gray-100 rounded-lg p-2 mb-4 text-xs font-mono">
+            <div>Status: <span className="text-blue-600">{status}</span></div>
+            <div>Connected: <span className={isConnected ? 'text-green-600' : 'text-red-600'}>{String(isConnected)}</span></div>
+            <div>Loading: <span className="text-orange-600">{String(isLoading)}</span></div>
+            <div>Wallet: <span className="text-purple-600">{walletAddress ? walletAddress.slice(0, 8) + '...' : 'null'}</span></div>
           </div>
 
           <AnimatePresence mode="wait">
@@ -349,30 +390,60 @@ export function TipJar() {
                 {/* Connected Wallet Info */}
                 {isConnected && walletAddress && (
                   <motion.div
-                    className="bg-cream rounded-xl p-3 mb-4 flex items-center justify-between flex-wrap gap-2"
+                    className="bg-cream rounded-xl p-3 mb-4"
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                   >
-                    <div>
-                      <div className="text-xs text-mocha/60 uppercase tracking-wide">Wallet</div>
-                      <div className="text-sm font-mono text-espresso">
-                        {walletAddress.slice(0, 4)}...{walletAddress.slice(-4)}
-                      </div>
+                    {/* Wallet Address with Copy Button */}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-xs text-mocha/60 uppercase tracking-wide">Your Smart Wallet</div>
+                      <button
+                        onClick={() => disconnect()}
+                        className="text-xs text-mocha/60 hover:text-red-500 transition-colors"
+                      >
+                        Disconnect
+                      </button>
                     </div>
-                    {balance !== null && (
-                      <div className="text-right">
-                        <div className="text-xs text-mocha/60 uppercase tracking-wide">Balance</div>
-                        <div className="text-sm font-semibold text-espresso">
-                          {balance.toFixed(4)} SOL
-                        </div>
-                      </div>
-                    )}
-                    <button
-                      onClick={() => disconnect()}
-                      className="text-xs text-mocha/60 hover:text-red-500 transition-colors"
+                    
+                    {/* Full Address Display with Copy */}
+                    <div 
+                      className="bg-white rounded-lg p-2 mb-2 flex items-center gap-2 cursor-pointer hover:bg-latte/50 transition-colors border border-caramel/20"
+                      onClick={() => {
+                        navigator.clipboard.writeText(walletAddress);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      }}
+                      title="Click to copy full address"
                     >
-                      Disconnect
-                    </button>
+                      <div className="text-xs font-mono text-espresso flex-1 break-all">
+                        {walletAddress}
+                      </div>
+                      <span className="text-xs text-copper whitespace-nowrap">
+                        {copied ? '✓ Copied!' : '📋 Copy'}
+                      </span>
+                    </div>
+                    
+                    {/* Balance and Faucet Link */}
+                    <div className="flex items-center justify-between">
+                      {balance !== null && (
+                        <div>
+                          <span className="text-xs text-mocha/60">Balance: </span>
+                          <span className="text-sm font-semibold text-espresso">
+                            {balance.toFixed(4)} SOL
+                          </span>
+                        </div>
+                      )}
+                      {balance !== null && balance < 0.01 && (
+                        <a
+                          href="https://faucet.solana.com"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-copper hover:underline"
+                        >
+                          Get devnet SOL →
+                        </a>
+                      )}
+                    </div>
                   </motion.div>
                 )}
 
@@ -411,9 +482,15 @@ export function TipJar() {
                       Lazorkit
                     </a>
                   </span>
-                  <span className="text-xs bg-gradient-to-r from-teal-400 to-cyan-500 text-white px-2 py-0.5 rounded-full font-medium">
-                    ⚡ Gasless
-                  </span>
+                  {FEE_MODE === 'paymaster' ? (
+                    <span className="text-xs bg-gradient-to-r from-teal-400 to-cyan-500 text-white px-2 py-0.5 rounded-full font-medium">
+                      ⚡ Gasless
+                    </span>
+                  ) : (
+                    <span className="text-xs bg-gradient-to-r from-amber-400 to-orange-500 text-white px-2 py-0.5 rounded-full font-medium">
+                      💰 User Pays Fees
+                    </span>
+                  )}
                 </div>
               </motion.div>
             )}

@@ -34,12 +34,16 @@ import { TipJar } from '@/components/TipJar';
  * @property paymasterConfig - Configuration for gasless transactions
  *   The paymaster service sponsors transaction fees so users don't pay gas.
  *   This is what makes "gasless" transactions possible!
+ * 
+ * ⚠️ NOTE: If the paymaster service is down, users will need to pay their own fees.
+ * Contact Lazorkit team on Telegram (https://t.me/lazorkit) for updated URLs.
  */
 const LAZORKIT_CONFIG = {
   rpcUrl: 'https://api.devnet.solana.com',
   portalUrl: 'https://portal.lazor.sh',
+  // Using Kora paymaster (the original lazorkit-paymaster.onrender.com was down)
   paymasterConfig: {
-    paymasterUrl: 'https://lazorkit-paymaster.onrender.com',
+    paymasterUrl: 'https://kora.devnet.lazorkit.com',
   },
 };
 
