@@ -113,6 +113,7 @@ export function TipJar() {
   const [txSignature, setTxSignature] = useState<string | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showDebug, setShowDebug] = useState(false);
 
   // Derive wallet address string for display
   const walletAddress = smartWalletPubkey?.toBase58();
@@ -317,12 +318,29 @@ export function TipJar() {
             </p>
           </div>
 
-          {/* Debug Info - Remove in production */}
-          <div className="bg-gray-100 rounded-lg p-2 mb-4 text-xs font-mono">
-            <div>Status: <span className="text-blue-600">{status}</span></div>
-            <div>Connected: <span className={isConnected ? 'text-green-600' : 'text-red-600'}>{String(isConnected)}</span></div>
-            <div>Loading: <span className="text-orange-600">{String(isLoading)}</span></div>
-            <div>Wallet: <span className="text-purple-600">{walletAddress ? walletAddress.slice(0, 8) + '...' : 'null'}</span></div>
+          {/* Debug Info - Collapsible */}
+          <div className="mb-4">
+            <button
+              onClick={() => setShowDebug(!showDebug)}
+              className="w-full flex items-center justify-between text-xs text-mocha/40 hover:text-mocha/60 transition-colors py-1"
+            >
+              <span>🔧 Debug Info</span>
+              <span>{showDebug ? '▲' : '▼'}</span>
+            </button>
+            {showDebug && (
+              <motion.div 
+                className="bg-gray-100 rounded-lg p-2 mt-1 text-xs font-mono"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+              >
+                <div>Status: <span className="text-blue-600">{status}</span></div>
+                <div>Connected: <span className={isConnected ? 'text-green-600' : 'text-red-600'}>{String(isConnected)}</span></div>
+                <div>Loading: <span className="text-orange-600">{String(isLoading)}</span></div>
+                <div>Wallet: <span className="text-purple-600">{walletAddress ? walletAddress.slice(0, 8) + '...' : 'null'}</span></div>
+                <div>Fee Mode: <span className="text-teal-600">{FEE_MODE}</span></div>
+              </motion.div>
+            )}
           </div>
 
           <AnimatePresence mode="wait">
