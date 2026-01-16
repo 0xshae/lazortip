@@ -1,6 +1,7 @@
 # ☕ Lazorkit Tip Jar
 
 > A gasless tip jar widget powered by Lazorkit SDK — Accept SOL tips with passkey authentication, no wallet popups!
+![Screenshot_16-1-2026_222142_lazortip vercel app](https://github.com/user-attachments/assets/5b45ebb9-f5f6-4c0c-9df0-45d22fd916b2)
 
 [![Live Demo](https://img.shields.io/badge/🔗_Live_Demo-lazortip.vercel.app-blue?style=for-the-badge)](https://lazortip.vercel.app/)
 
