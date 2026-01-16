@@ -81,6 +81,19 @@ const TIP_RECIPIENT = 'YOUR_WALLET_ADDRESS_HERE';
 3. Create a passkey (first time) or authenticate
 4. Select a tip amount and confirm with biometrics
 5. View your transaction on Solana Explorer!
+---
+
+## ⚠️ Known Issues
+
+### Chrome Browser Compatibility
+
+The app may encounter a **"Signing failed"** error on Google Chrome due to WebAuthn TLS certificate restrictions with the Lazorkit portal's iframe.
+
+**Workaround:** Use **Microsoft Edge** or **Firefox** instead — both work correctly with Windows Hello and other passkey providers.
+
+> This is a known limitation with how Chrome handles WebAuthn in cross-origin iframes with certain TLS configurations.
+
+---
 
 ---
 
@@ -333,7 +346,6 @@ const TIP_RECIPIENT = 'YOUR_WALLET_ADDRESS_HERE';
 - The **paymaster** only covers fees, never has access to user funds
 
 ---
-
 ## 🧪 Testing
 
 ### Get Devnet SOL
