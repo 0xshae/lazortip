@@ -81,6 +81,80 @@ const TIP_RECIPIENT = 'YOUR_WALLET_ADDRESS_HERE';
 3. Create a passkey (first time) or authenticate
 4. Select a tip amount and confirm with biometrics
 5. View your transaction on Solana Explorer!
+
+---
+
+## 🍴 Fork This for Your Own Tip Jar
+
+Want to add a gasless tip jar to your website? Fork this repo and follow these steps:
+
+### Step 1: Change the Recipient Wallet (Required)
+
+In `src/components/TipJar.tsx`, update line 56 with your Solana wallet address:
+
+```typescript
+// Replace this with YOUR wallet address
+const TIP_RECIPIENT = 'YOUR_SOLANA_WALLET_ADDRESS_HERE';
+```
+
+### Step 2: Customize Tip Amounts (Optional)
+
+In `src/components/TipJar.tsx`, modify the preset amounts:
+
+```typescript
+const TIP_AMOUNTS = [
+  { value: 0.01, label: 'Coffee', emoji: '☕' },
+  { value: 0.05, label: 'Lunch', emoji: '🍔' },
+  { value: 0.25, label: 'Dinner', emoji: '🍝' },
+];
+```
+
+### Step 3: Switch to Mainnet (For Production)
+
+For real SOL tips, update these files:
+
+**`src/components/TipJar.tsx`:**
+```typescript
+const RPC_ENDPOINT = 'https://api.mainnet-beta.solana.com';
+```
+
+**`src/app/page.tsx`:**
+```typescript
+const LAZORKIT_CONFIG = {
+  rpcUrl: 'https://api.mainnet-beta.solana.com',
+  portalUrl: 'https://portal.lazor.sh',
+  paymasterConfig: {
+    paymasterUrl: 'https://kora.mainnet.lazorkit.com', // Contact Lazorkit for mainnet URL
+  },
+};
+```
+
+Also update the Solana Explorer link in `TipJar.tsx` (line ~362) to remove `?cluster=devnet`.
+
+### Step 4: Deploy
+
+```bash
+# Clone your fork
+git clone https://github.com/YOUR_USERNAME/lazortip.git
+cd lazortip
+
+# Install dependencies
+npm install
+
+# Test locally
+npm run dev
+
+# Deploy to Vercel (recommended)
+npx vercel
+```
+
+### That's it! 🎉
+
+You now have a gasless tip jar on your site. Users can send you SOL tips without:
+- Installing wallet extensions
+- Managing seed phrases
+- Paying gas fees
+
 ---
 
 ## ⚠️ Known Issues
