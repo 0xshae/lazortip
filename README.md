@@ -46,7 +46,7 @@ FaceID/TouchID prompt appears
 ```bash
 # Clone the repository
 git clone https://github.com/YOUR_USERNAME/lazorkit-tip-jar.git
-cd lazorkit-tip-jar
+cd lazortip
 
 # Install dependencies
 npm install
